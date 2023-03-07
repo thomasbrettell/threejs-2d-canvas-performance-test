@@ -8,8 +8,8 @@ import InstancedCicles from '../InstancedCircles';
 import { shuffle } from '../../utils';
 import gsap, { TweenLite } from 'gsap';
 
-const radius = 1;
-const padding = 0.3;
+const radius = 0.5;
+const padding = 0.2;
 
 const pointsAmount = 80000;
 
@@ -72,8 +72,16 @@ const Scene = () => {
 
       <Stats />
 
-      <Html>
-        <button onClick={tweenHandler}>Tween!</button>
+      <Html fullscreen>
+        <button style={{ transform: `translate(0, 100px)` }} onClick={tweenHandler}>
+          Tween!
+        </button>
+
+        <div style={{ transform: `translate(0, 120px)` }}>Points: {pointsAmount}</div>
+
+        <div style={{ transform: `translate(0, 130px)` }}>Radius: {radius}</div>
+
+        <div style={{ transform: `translate(0, 140px)` }}>Padding: {padding}</div>
       </Html>
     </>
   );
