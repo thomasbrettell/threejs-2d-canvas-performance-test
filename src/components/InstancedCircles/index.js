@@ -1,45 +1,30 @@
-import { useFrame } from '@react-three/fiber';
 import React, { useLayoutEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { randomNumRange } from '../../utils';
 
 const o = new THREE.Object3D();
 
-const InstancedCicles = ({ data, radius }) => {
-  const length = data.positions.length / 3;
+const InstancedCicles = ({ positions, radius, color = 'black', colours }) => {
+  const length = positions.length / 3;
   const ref = useRef();
 
-  useFrame(() => {
-    // console.log(ref.current);
-    // const positions = ref.current.geometry.attributes.position.array;
-    // console.log(positions);
-    for (let i = 0; i < data.positions.length; i += 3) {
+  useLayoutEffect(() => {
+    for (let i = 0; i < positions.length; i += 3) {
       const id = i / 3;
-      o.position.set(
-        data.positions[i] + randomNumRange(-10, 10),
-        -data.positions[i + 1] + randomNumRange(-10, 10),
-        data.positions[i + 2]
-      );
+      o.position.set(positions[i], -positions[i + 1], positions[i + 2]);
       o.updateMatrix();
       ref.current.setMatrixAt(id, o.matrix);
     }
     ref.current.instanceMatrix.needsUpdate = true;
-  });
-
-  // useLayoutEffect(() => {
-  //   for (let i = 0; i < data.positions.length; i += 3) {
-  //     const id = i / 3;
-  //     o.position.set(data.positions[i], -data.positions[i + 1], data.positions[i + 2]);
-  //     o.updateMatrix();
-  //     ref.current.setMatrixAt(id, o.matrix);
-  //   }
-  //   ref.current.instanceMatrix.needsUpdate = true;
-  // }, []);
+  }, [positions]);
 
   return (
     <instancedMesh ref={ref} args={[null, null, length]}>
-      <circleGeometry args={[radius, 64, 64]} />
-      <meshBasicMaterial color={'black'} />
+      <circleGeometry args={[radius, 64, 64]}>
+        <instancedBufferAttribute attach="attributes-color" args={[colours, 3]} />
+      </circleGeometry>
+      <meshBasicMaterial toneMapped={false} vertexColors />
+
+      {/* <meshBasicMaterial color={color} /> */}
     </instancedMesh>
   );
 };
