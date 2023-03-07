@@ -9,9 +9,9 @@ import { shuffle } from '../../utils';
 import gsap, { TweenLite } from 'gsap';
 
 const radius = 1;
-const padding = 0.5;
+const padding = 0.3;
 
-const pointsAmount = 8000;
+const pointsAmount = 80000;
 
 const circles = Array.from({ length: pointsAmount }).map(() => ({
   r: radius + padding
