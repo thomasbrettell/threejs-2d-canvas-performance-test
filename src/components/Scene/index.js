@@ -8,8 +8,8 @@ import InstancedCicles from '../InstancedCircles';
 import { shuffle } from '../../utils';
 import gsap, { TweenLite } from 'gsap';
 
-const radius = 3;
-const padding = 1;
+const radius = 1;
+const padding = 0.5;
 
 const pointsAmount = 8000;
 
