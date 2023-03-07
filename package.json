@@ -1,0 +1,34 @@
+{
+  "name": "india-threejs-charts",
+  "version": "1.0.0-pre",
+  "description": "A project generated from aunty's react project template.",
+  "license": "MIT",
+  "private": true,
+  "contributors": [
+    "Brettell <thomas.a.brettell@gmail.com>"
+  ],
+  "aunty": {
+    "type": "react"
+  },
+  "scripts": {
+    "start": "aunty serve",
+    "dev": "aunty serve",
+    "test": "aunty test"
+  },
+  "devDependencies": {
+    "@abcnews/aunty": "^14.0.0",
+    "react-test-renderer": "^18.2.0"
+  },
+  "dependencies": {
+    "@abcnews/alternating-case-to-object": "^3.1.0",
+    "@abcnews/env-utils": "^3.1.0",
+    "@abcnews/mount-utils": "^2.0.0",
+    "@react-three/drei": "^9.57.0",
+    "@react-three/fiber": "^8.11.9",
+    "@types/three": "^0.149.0",
+    "d3": "^7.8.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "three": "^0.150.1"
+  }
+}

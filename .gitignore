@@ -1,0 +1,12 @@
+# dependencies
+/node_modules
+
+# environment
+.env
+
+# output
+/.aunty
+
+# misc
+.DS_Store
+npm-debug.log
