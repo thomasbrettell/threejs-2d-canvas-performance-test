@@ -5,7 +5,7 @@ import { randomNumRange } from '../../utils';
 
 const o = new THREE.Object3D();
 
-const InstancedCicles = ({ data }) => {
+const InstancedCicles = ({ data, radius }) => {
   const length = data.positions.length / 3;
   const ref = useRef();
 
@@ -38,7 +38,7 @@ const InstancedCicles = ({ data }) => {
 
   return (
     <instancedMesh ref={ref} args={[null, null, length]}>
-      <circleGeometry args={[3, 64, 64]} />
+      <circleGeometry args={[radius, 64, 64]} />
       <meshBasicMaterial color={'black'} />
     </instancedMesh>
   );

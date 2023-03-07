@@ -6,8 +6,8 @@ import * as d3 from 'd3';
 import { Stats } from '@react-three/drei';
 import InstancedCicles from '../InstancedCircles';
 
-const radius = 1;
-const padding = 0.1;
+const radius = 0.5;
+const padding = 0.05;
 
 const circles = Array.from({ length: 80000 }).map(() => ({
   r: radius + padding
@@ -31,7 +31,7 @@ const Scene = () => {
         {/* <Circle x={center.r} y={center.r} r={center.r} /> */}
 
         <group position={[30, -30, 0]}>
-          <InstancedCicles data={{ positions }} />
+          <InstancedCicles data={{ positions }} radius={radius} />
         </group>
 
         {/* {pack.map((d, i) => (
