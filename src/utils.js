@@ -2,7 +2,8 @@ export const randomNumRange = (min, max) => {
   return Math.random() * (max - min) + min;
 };
 
-export function shuffle(array) {
+export function shuffle(a) {
+  const array = [...a];
   let currentIndex = array.length,
     randomIndex;
 
