@@ -5,19 +5,79 @@ import Circle from '../Circle';
 import * as d3 from 'd3';
 import { Stats, Html } from '@react-three/drei';
 import InstancedCicles from '../InstancedCircles';
-import { shuffle } from '../../utils';
+import { shuffle, randomNumRange } from '../../utils';
 import gsap, { TweenLite } from 'gsap';
+import Color from 'color';
 
-const radius = 0.5;
-const padding = 0.2;
+function circlePackingInSquare(squareWidth, circles) {
+  const packedCircles = [];
+  const radius = Math.min(squareWidth / (2 * Math.sqrt(circles.length)), Math.min(...circles));
 
-const pointsAmount = 80000;
+  for (let i = 0; i < circles.length; i++) {
+    const circle = {
+      x: 0,
+      y: 0,
+      r: circles[i]
+    };
+
+    // generate random coordinates for the circle within the square
+    circle.x = Math.random() * (squareWidth - 2 * radius) + radius;
+    circle.y = Math.random() * (squareWidth - 2 * radius) + radius;
+
+    // check for overlap with previously placed circles
+    let overlapping = false;
+    for (let j = 0; j < packedCircles.length; j++) {
+      const otherCircle = packedCircles[j];
+      const distance = Math.sqrt((circle.x - otherCircle.x) ** 2 + (circle.y - otherCircle.y) ** 2);
+      if (distance < circle.r + otherCircle.r) {
+        overlapping = true;
+        break;
+      }
+    }
+
+    // if no overlap, add circle to array
+    if (!overlapping) {
+      packedCircles.push(circle);
+    }
+  }
+
+  return packedCircles;
+}
+
+const COUNTRIES = ['CHINA', 'AUSTRALIA', 'INDIA'];
+
+const COUNTRY_COLORS = {
+  CHINA: 'red',
+  AUSTRALIA: 'green',
+  INDIA: 'blue'
+};
+
+const CHINA_COLOR = 'red';
+const AUSTRALIA_COLOR = 'green';
+const INDIA_COLOR = 'blue';
+
+const radius = 1.5;
+const padding = 0.4;
+
+const pointsAmount = 32000;
 
 const circles = Array.from({ length: pointsAmount }).map(() => ({
-  r: radius + padding
+  r: radius + padding,
+  country: COUNTRIES[Math.floor(Math.random() * COUNTRIES.length)]
 }));
-const pack = d3.packSiblings(circles);
-const center = d3.packEnclose(pack);
+
+const pack = circlePackingInSquare(600, circles);
+console.log(pack);
+
+// const pack = d3.packSiblings(circles);
+
+// const center = d3.packEnclose(pack);
+
+const center = {
+  x: 0,
+  y: 0,
+  r: 200
+};
 
 const initialPositions = new Float32Array(pack.length * 3);
 for (let i = 0; i < pack.length; i++) {
@@ -27,7 +87,7 @@ for (let i = 0; i < pack.length; i++) {
 }
 
 const colours = Float32Array.from(
-  new Array(pack.length).fill().flatMap((_, i) => [Math.random(), Math.random(), Math.random()])
+  new Array(pack.length).fill().flatMap((_, i) => Color(COUNTRY_COLORS[pack[i].country]).array())
 );
 
 const Scene = () => {
@@ -55,8 +115,6 @@ const Scene = () => {
     TweenLite.to(animationObject, 1, newPositions);
   };
 
-  console.log(positions);
-
   return (
     <>
       <group position={[-windowWidth / 2, windowHeight / 2, 0]}>
@@ -73,15 +131,19 @@ const Scene = () => {
       <Stats />
 
       <Html fullscreen>
-        <button style={{ transform: `translate(0, 100px)` }} onClick={tweenHandler}>
-          Tween!
-        </button>
-
-        <div style={{ transform: `translate(0, 120px)` }}>Points: {pointsAmount}</div>
-
-        <div style={{ transform: `translate(0, 130px)` }}>Radius: {radius}</div>
-
-        <div style={{ transform: `translate(0, 140px)` }}>Padding: {padding}</div>
+        <div
+          style={{
+            background: 'lightgrey',
+            position: 'absolute',
+            top: '0',
+            right: '0'
+          }}
+        >
+          <button onClick={tweenHandler}>Tween!</button>
+          <div>Points: {pointsAmount}</div>
+          <div>Radius: {radius}</div>
+          <div>Padding: {padding}</div>
+        </div>
       </Html>
     </>
   );
