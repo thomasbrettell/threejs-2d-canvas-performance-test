@@ -19,7 +19,7 @@ const InstancedCicles = ({ positions, radius, color = 'black', colours }) => {
 
   return (
     <instancedMesh ref={ref} args={[null, null, length]}>
-      <circleGeometry args={[radius, 64, 64]}>
+      <circleGeometry args={[radius, 8, 8]}>
         <instancedBufferAttribute attach="attributes-color" args={[colours, 3]} />
       </circleGeometry>
       <meshBasicMaterial toneMapped={false} vertexColors />
