@@ -11,11 +11,11 @@ import Color from 'color';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { clamp, lerp, smootherstep, smoothstep } from 'three/src/math/MathUtils';
+import { useControls } from 'leva';
+import styles from './styles.scss';
 
 const radius = 1;
 const padding = radius * 0.25;
-
-const COUNTRIES = ['CHINA', 'AUSTRALIA', 'INDIA'];
 
 const COUNTRY_DETAILS = {
   CHINA: {
@@ -42,8 +42,15 @@ const pointsManager = {
     Circle2: {
       positions: null
     },
-    rectangles: {
+    Rectangles: {
       positions: null
+    },
+    Random: {
+      positions: Array.from({ length: pointsAmount }).map(() => [
+        randomNumRange(0, window.innerWidth),
+        randomNumRange(0, -window.innerHeight),
+        0
+      ])
     }
   }
 };
@@ -55,8 +62,6 @@ pointsManager.points = Array.from({ length: pointsAmount }).map(() => {
   };
 });
 
-const STATES = ['Circle 1', 'Circle 2', 'Rectangles'];
-
 const circle1 = d3.packSiblings(
   pointsManager.points.map(p => {
     return { ...p, r: pointsManager.r };
@@ -65,7 +70,11 @@ const circle1 = d3.packSiblings(
 
 pointsManager.states.Circle1.circle = d3.packEnclose(circle1);
 
-pointsManager.states.Circle1.positions = circle1.map(p => [p.x, p.y, 0]);
+pointsManager.states.Circle1.positions = circle1.map(p => [
+  p.x + pointsManager.states.Circle1.circle.r,
+  p.y - pointsManager.states.Circle1.circle.r,
+  0
+]);
 pointsManager.states.Circle2.positions = shuffle(pointsManager.states.Circle1.positions);
 
 const colours = Float32Array.from(
@@ -86,9 +95,30 @@ console.log(pointsManager);
 const o = new THREE.Object3D();
 
 const Scene = () => {
-  const instanceRef = useRef();
-  const pointsState = useRef('Circle1');
   const interpolateDuration = useRef(1);
+  const { pointsState } = useControls({
+    pointsState: {
+      value: 'Circle1',
+      options: Object.keys(pointsManager.states),
+      onChange: () => {
+        interpolateDuration.current = 0;
+      },
+      transient: false
+    },
+    pointsAmount: {
+      value: pointsAmount,
+      disabled: true
+    },
+    padding: {
+      value: padding,
+      disabled: true
+    },
+    radius: {
+      value: radius,
+      disabled: true
+    }
+  });
+  const instanceRef = useRef();
 
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
@@ -97,7 +127,7 @@ const Scene = () => {
 
     for (let i = 0; i < pointsManager.points.length; i++) {
       const point = pointsManager.points[i];
-      const toPos = pointsManager.states[pointsState.current].positions[i];
+      const toPos = pointsManager.states[pointsState].positions[i];
 
       const st = smoothstep(interpolateDuration.current, 0, 1);
 
@@ -111,47 +141,16 @@ const Scene = () => {
     instanceRef.current.instanceMatrix.needsUpdate = true;
   });
 
-  const tweenHandler = () => {
-    interpolateDuration.current = 0;
-    if (pointsState.current === 'Circle1') {
-      pointsState.current = 'Circle2';
-    } else {
-      pointsState.current = 'Circle1';
-    }
-  };
-
   return (
     <>
       <group position={[-windowWidth / 2, windowHeight / 2, 0]}>
-        <group position={[pointsManager.states.Circle1.circle.r, -pointsManager.states.Circle1.circle.r, 0]}>
-          <InstancedCicles ref={instanceRef} length={pointsManager.points.length} colours={colours} radius={radius} />
-        </group>
-        <Square x={windowWidth - 75} y={175} width="100" height={100} />
+        {/* <group position={[pointsManager.states.Circle1.circle.r, -pointsManager.states.Circle1.circle.r, 0]}> */}
+        <InstancedCicles ref={instanceRef} length={pointsManager.points.length} colours={colours} radius={radius} />
+        {/* </group> */}
+        {/* <Square x={windowWidth - 75} y={175} width="100" height={100} /> */}
       </group>
 
-      <Stats />
-
-      <Html fullscreen>
-        <div
-          style={{
-            background: 'lightgrey',
-            position: 'absolute',
-            top: '0',
-            right: '0'
-          }}
-        >
-          <button onClick={tweenHandler}>Tween!</button>
-          <div>Points: {pointsAmount}</div>
-          <div>Radius: {radius}</div>
-          <div>Padding: {padding}</div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', marginTop: '10px' }}>
-            {STATES.map(state => (
-              <button key={state}>{state}</button>
-            ))}
-          </div>
-        </div>
-      </Html>
+      <Stats className={styles.stats} />
     </>
   );
 };
