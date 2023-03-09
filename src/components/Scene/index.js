@@ -10,7 +10,7 @@ import gsap, { TweenLite } from 'gsap';
 import Color from 'color';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { clamp, lerp, smootherstep, smoothstep } from 'three/src/math/MathUtils';
+import { clamp, generateUUID, lerp, smootherstep, smoothstep } from 'three/src/math/MathUtils';
 import { useControls } from 'leva';
 import styles from './styles.scss';
 
@@ -55,10 +55,11 @@ const pointsManager = {
   }
 };
 
-pointsManager.points = Array.from({ length: pointsAmount }).map(() => {
+pointsManager.points = Array.from({ length: pointsAmount }).map((_, i) => {
   return {
     country: Object.keys(COUNTRY_DETAILS)[Math.floor(Math.random() * Object.keys(COUNTRY_DETAILS).length)],
-    currentPos: { x: null, y: null }
+    currentPos: { x: null, y: null },
+    id: i
   };
 });
 
@@ -76,6 +77,24 @@ pointsManager.states.Circle1.positions = circle1.map(p => [
   0
 ]);
 pointsManager.states.Circle2.positions = shuffle(pointsManager.states.Circle1.positions);
+
+const rectangles = d3.packSiblings(
+  pointsManager.points
+    .filter(p => p.country !== 'AUSTRALIA')
+    .map(p => {
+      return { ...p, r: pointsManager.r };
+    })
+);
+pointsManager.states.Rectangles.circle = d3.packEnclose(rectangles);
+pointsManager.states.Rectangles.positions = pointsManager.points.map(p => {
+  if (p.country === 'AUSTRALIA') {
+    return [-radius, -radius, 0];
+  } else {
+    const rect = rectangles.find(r => r.id === p.id);
+    return [rect.x + pointsManager.states.Rectangles.circle.r, rect.y - pointsManager.states.Rectangles.circle.r, 0];
+  }
+});
+console.log(rectangles);
 
 const colours = Float32Array.from(
   new Array(pointsManager.points.length)
