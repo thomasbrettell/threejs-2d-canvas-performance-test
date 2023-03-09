@@ -17,8 +17,8 @@ import { sortBy } from 'lodash';
 
 const url = new URL(window.location.href);
 
-const pointsAmount = +url.searchParams.get('pointsamount') ?? 80000;
-const radius = +url.searchParams.get('radius') ?? 1;
+const pointsAmount = +(url.searchParams.get('pointsamount') ?? 80000);
+const radius = +(url.searchParams.get('radius') ?? 1);
 const padding = radius * 0.25;
 
 const COUNTRY_DETAILS = {
@@ -47,6 +47,9 @@ const pointsManager = {
     Circles3: {
       positions: null
     },
+    Rectangle: {
+      positions: null
+    },
     SortedRectangle: {
       positions: null
     },
@@ -59,6 +62,9 @@ const pointsManager = {
         randomNumRange(0, -window.innerHeight),
         0
       ])
+    },
+    PopulationPyrmaid: {
+      positions: null
     }
   }
 };
@@ -67,7 +73,8 @@ pointsManager.points = Array.from({ length: pointsAmount }).map((_, i) => {
   return {
     country: Object.keys(COUNTRY_DETAILS)[Math.floor(Math.random() * Object.keys(COUNTRY_DETAILS).length)],
     currentPos: { x: null, y: null },
-    id: i
+    id: i,
+    age: Math.floor(Math.random() * 100)
   };
 });
 
@@ -131,12 +138,21 @@ pointsManager.points.forEach((p, i) => {
   p.currentPos.y = pos[1];
 });
 
-let columns = 300;
+let columns = 200;
 pointsManager.states.SortedRectangle.positions = sortBy(pointsManager.points, 'country').reduce((acc, p, i) => {
   const x = i % columns;
   const y = Math.floor(i / columns);
 
-  acc[p.id] = [x * (radius * 2 + padding), -y * (radius * 2 + padding), 0];
+  acc[p.id] = [x * (radius * 2 + padding) + radius, -y * (radius * 2 + padding) - radius, 0];
+
+  return acc;
+}, []);
+
+pointsManager.states.Rectangle.positions = pointsManager.points.reduce((acc, p, i) => {
+  const x = i % columns;
+  const y = Math.floor(i / columns);
+
+  acc[p.id] = [x * (radius * 2 + padding) + radius, -y * (radius * 2 + padding) - radius, 0];
 
   return acc;
 }, []);
@@ -144,20 +160,34 @@ pointsManager.states.SortedRectangle.positions = sortBy(pointsManager.points, 'c
 let mapIndex = 0;
 pointsManager.states.SortedRectangles.positions = [];
 d3.group(pointsManager.points, d => d.country).forEach(points => {
-  const columns = 75;
+  const columns = 60;
   points.forEach((p, i) => {
     const x = i % columns;
     const y = Math.floor(i / columns);
 
     pointsManager.states.SortedRectangles.positions[p.id] = [
-      x * (radius * 2 + padding) + 400 * mapIndex,
-      -y * (radius * 2 + padding),
+      x * (radius * 2 + padding) + columns * (radius * 2 + padding) * mapIndex + 50 * mapIndex + radius,
+      -y * (radius * 2 + padding) - radius,
       0
     ];
   });
 
   mapIndex++;
 });
+
+pointsManager.states.PopulationPyrmaid.positions = sortBy(pointsManager.points, 'age').reduce((acc, p, i) => {
+  if (p.country === 'AUSTRALIA') {
+    acc[p.id] = [-radius, -radius, 0];
+    return acc;
+  }
+
+  const x = i % columns;
+  const y = Math.floor(i / columns);
+
+  acc[p.id] = [x * (radius * 2 + padding) + radius, -y * (radius * 2 + padding) - radius, 0];
+
+  return acc;
+}, []);
 
 console.log(pointsManager);
 
@@ -186,7 +216,11 @@ const Scene = () => {
       value: radius,
       disabled: true
     },
-    showFPSSpinner: false
+    showFPSSpinner: false,
+    todo: {
+      editable: false,
+      value: `- population pyramid\n- oval`
+    }
   });
   const instanceRef = useRef();
 
@@ -194,6 +228,11 @@ const Scene = () => {
 
   useFrame((state, deltaTime) => {
     interpolateDuration.current = clamp((interpolateDuration.current += deltaTime * 0.3), 0, 1);
+
+    //no need to run the frame if the interpolation is done
+    if (interpolateDuration.current >= 1 || interpolateDuration.current <= 0) return;
+
+    console.log('updating');
 
     for (let i = 0; i < pointsManager.points.length; i++) {
       const point = pointsManager.points[i];
@@ -226,6 +265,14 @@ const Scene = () => {
       </group>
 
       <Stats className={styles.stats} />
+
+      <Html fullscreen className={styles.html}>
+        <svg>
+          <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle">
+            {pointsState}
+          </text>
+        </svg>
+      </Html>
     </>
   );
 };

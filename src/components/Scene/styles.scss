@@ -2,3 +2,8 @@
   top: unset !important;
   bottom: 0;
 }
+
+.html {
+  user-select: none;
+  pointer-events: none;
+}
