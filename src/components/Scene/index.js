@@ -10,9 +10,10 @@ import gsap, { TweenLite } from 'gsap';
 import Color from 'color';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { clamp, generateUUID, lerp, smootherstep, smoothstep } from 'three/src/math/MathUtils';
+import { clamp, lerp, smoothstep } from 'three/src/math/MathUtils';
 import { useControls } from 'leva';
 import styles from './styles.scss';
+import { sortBy } from 'lodash';
 
 const radius = 1;
 const padding = radius * 0.25;
@@ -42,7 +43,13 @@ const pointsManager = {
     Circle2: {
       positions: null
     },
-    Rectangles: {
+    Circles3: {
+      positions: null
+    },
+    SortedRectangle: {
+      positions: null
+    },
+    SortedRectangles: {
       positions: null
     },
     Random: {
@@ -78,35 +85,68 @@ pointsManager.states.Circle1.positions = circle1.map(p => [
 ]);
 pointsManager.states.Circle2.positions = shuffle(pointsManager.states.Circle1.positions);
 
-const rectangles = d3.packSiblings(
+const circles3 = d3.packSiblings(
   pointsManager.points
     .filter(p => p.country !== 'AUSTRALIA')
     .map(p => {
       return { ...p, r: pointsManager.r };
     })
 );
-pointsManager.states.Rectangles.circle = d3.packEnclose(rectangles);
-pointsManager.states.Rectangles.positions = pointsManager.points.map(p => {
+
+pointsManager.states.Circles3.circle = d3.packEnclose(circles3);
+
+const circle3positions = circles3.reduce((acc, p) => {
+  acc[p.id] = {
+    ...p
+  };
+  return acc;
+}, {});
+
+pointsManager.states.Circles3.positions = pointsManager.points.map(p => {
   if (p.country === 'AUSTRALIA') {
     return [-radius, -radius, 0];
   } else {
-    const rect = rectangles.find(r => r.id === p.id);
-    return [rect.x + pointsManager.states.Rectangles.circle.r, rect.y - pointsManager.states.Rectangles.circle.r, 0];
+    const rect = circle3positions[p.id];
+    return [rect.x + pointsManager.states.Circles3.circle.r, rect.y - pointsManager.states.Circles3.circle.r, 0];
   }
 });
-console.log(rectangles);
 
 const colours = Float32Array.from(
   new Array(pointsManager.points.length)
     .fill()
     .flatMap((_, i) => Color(COUNTRY_DETAILS[pointsManager.points[i].country].color).array())
 );
+
 pointsManager.colours = colours;
 
 pointsManager.points.forEach((p, i) => {
   const pos = pointsManager.states.Circle1.positions[i];
   p.currentPos.x = pos[0];
   p.currentPos.y = pos[1];
+});
+
+let columns = 300;
+pointsManager.states.SortedRectangle.positions = sortBy(pointsManager.points, 'country').reduce((acc, p, i) => {
+  const x = i % columns;
+  const y = Math.floor(i / columns);
+
+  acc[p.id] = [x * 3, -y * 3, 0];
+
+  return acc;
+}, []);
+
+let mapIndex = 0;
+pointsManager.states.SortedRectangles.positions = [];
+d3.group(pointsManager.points, d => d.country).forEach(points => {
+  const columns = 75;
+  points.forEach((p, i) => {
+    const x = i % columns;
+    const y = Math.floor(i / columns);
+
+    pointsManager.states.SortedRectangles.positions[p.id] = [x * 3 + 250 * mapIndex, -y * 3, 0];
+  });
+
+  mapIndex++;
 });
 
 console.log(pointsManager);
