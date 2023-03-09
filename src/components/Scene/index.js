@@ -115,7 +115,7 @@ const o = new THREE.Object3D();
 
 const Scene = () => {
   const interpolateDuration = useRef(1);
-  const { pointsState } = useControls({
+  const { pointsState, showFPSSpinner } = useControls({
     pointsState: {
       value: 'Circle1',
       options: Object.keys(pointsManager.states),
@@ -135,7 +135,8 @@ const Scene = () => {
     radius: {
       value: radius,
       disabled: true
-    }
+    },
+    showFPSSpinner: false
   });
   const instanceRef = useRef();
 
@@ -166,7 +167,7 @@ const Scene = () => {
         {/* <group position={[pointsManager.states.Circle1.circle.r, -pointsManager.states.Circle1.circle.r, 0]}> */}
         <InstancedCicles ref={instanceRef} length={pointsManager.points.length} colours={colours} radius={radius} />
         {/* </group> */}
-        {/* <Square x={windowWidth - 75} y={175} width="100" height={100} /> */}
+        {showFPSSpinner && <Square x={windowWidth / 2} y={windowHeight / 2} width="100" height={100} />}
       </group>
 
       <Stats className={styles.stats} />
