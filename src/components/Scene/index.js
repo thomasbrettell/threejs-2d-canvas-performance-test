@@ -31,46 +31,80 @@ const COUNTRY_DETAILS = {
 
 const pointsAmount = 80000;
 
-const points = Array.from({ length: pointsAmount }).map(() => {
+//TODO
+// make this a class
+const pointsManager = {
+  r: radius + padding,
+  states: {
+    Circle1: {
+      positions: null
+    },
+    Circle2: {
+      positions: null
+    },
+    rectangles: {
+      positions: null
+    }
+  }
+};
+
+pointsManager.points = Array.from({ length: pointsAmount }).map(() => {
   return {
-    r: radius + padding,
-    country: Object.keys(COUNTRY_DETAILS)[Math.floor(Math.random() * Object.keys(COUNTRY_DETAILS).length)]
+    country: Object.keys(COUNTRY_DETAILS)[Math.floor(Math.random() * Object.keys(COUNTRY_DETAILS).length)],
+    currentPos: { x: null, y: null }
   };
 });
 
 const STATES = ['Circle 1', 'Circle 2', 'Rectangles'];
 
-const pack = d3.packSiblings(points);
-const pack2 = shuffle(pack);
-
-const center = d3.packEnclose(pack);
-
-const colours = Float32Array.from(
-  new Array(pack.length).fill().flatMap((_, i) => Color(COUNTRY_DETAILS[pack[i].country].color).array())
+const circle1 = d3.packSiblings(
+  pointsManager.points.map(p => {
+    return { ...p, r: pointsManager.r };
+  })
 );
 
-let isPack1 = true;
+pointsManager.states.Circle1.circle = d3.packEnclose(circle1);
+
+pointsManager.states.Circle1.positions = circle1.map(p => [p.x, p.y, 0]);
+pointsManager.states.Circle2.positions = shuffle(pointsManager.states.Circle1.positions);
+
+const colours = Float32Array.from(
+  new Array(pointsManager.points.length)
+    .fill()
+    .flatMap((_, i) => Color(COUNTRY_DETAILS[pointsManager.points[i].country].color).array())
+);
+pointsManager.colours = colours;
+
+pointsManager.points.forEach((p, i) => {
+  const pos = pointsManager.states.Circle1.positions[i];
+  p.currentPos.x = pos[0];
+  p.currentPos.y = pos[1];
+});
+
+console.log(pointsManager);
 
 const o = new THREE.Object3D();
 
 const Scene = () => {
   const instanceRef = useRef();
-  const currentPositions = useRef(pack);
-  const newPositions = useRef(pack);
+  const pointsState = useRef('Circle1');
   const interpolateDuration = useRef(1);
 
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
   useFrame((state, deltaTime) => {
-    interpolateDuration.current = clamp((interpolateDuration.current += deltaTime * 0.99), 0, 1);
+    interpolateDuration.current = clamp((interpolateDuration.current += deltaTime * 0.3), 0, 1);
 
-    for (let i = 0; i < currentPositions.current.length; i++) {
-      const pos = currentPositions.current[i];
-      const toPos = newPositions.current[i];
+    for (let i = 0; i < pointsManager.points.length; i++) {
+      const point = pointsManager.points[i];
+      const toPos = pointsManager.states[pointsState.current].positions[i];
 
       const st = smoothstep(interpolateDuration.current, 0, 1);
 
-      o.position.set(lerp(pos.x, toPos.x, st), lerp(pos.y, toPos.y, st), 0);
+      point.currentPos.x = lerp(point.currentPos.x, toPos[0], st);
+      point.currentPos.y = lerp(point.currentPos.y, toPos[1], st);
+
+      o.position.set(point.currentPos.x, point.currentPos.y, 0);
       o.updateMatrix();
       instanceRef.current.setMatrixAt(i, o.matrix);
     }
@@ -78,28 +112,19 @@ const Scene = () => {
   });
 
   const tweenHandler = () => {
-    interpolateDuration.current = Math.abs(interpolateDuration.current - 1);
-    if (isPack1) {
-      isPack1 = false;
-      newPositions.current = pack2;
-      currentPositions.current = pack;
+    interpolateDuration.current = 0;
+    if (pointsState.current === 'Circle1') {
+      pointsState.current = 'Circle2';
     } else {
-      isPack1 = true;
-      newPositions.current = pack;
-      currentPositions.current = pack2;
+      pointsState.current = 'Circle1';
     }
   };
 
   return (
     <>
       <group position={[-windowWidth / 2, windowHeight / 2, 0]}>
-        <group position={[center.r, -center.r, 0]}>
-          <InstancedCicles
-            ref={instanceRef}
-            length={currentPositions.current.length}
-            colours={colours}
-            radius={radius}
-          />
+        <group position={[pointsManager.states.Circle1.circle.r, -pointsManager.states.Circle1.circle.r, 0]}>
+          <InstancedCicles ref={instanceRef} length={pointsManager.points.length} colours={colours} radius={radius} />
         </group>
         <Square x={windowWidth - 75} y={175} width="100" height={100} />
       </group>
