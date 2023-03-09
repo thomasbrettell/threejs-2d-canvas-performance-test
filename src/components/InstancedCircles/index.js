@@ -1,5 +1,4 @@
-import React, { forwardRef, useLayoutEffect, useRef } from 'react';
-import * as THREE from 'three';
+import React, { forwardRef } from 'react';
 
 const InstancedCicles = forwardRef(({ length, radius, color = 'black', colours }, ref) => {
   return (

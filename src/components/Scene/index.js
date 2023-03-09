@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import useWindowSize from '../hooks/useWindowSize';
 import Square from '../Square';
 import Circle from '../Circle';
@@ -15,7 +15,10 @@ import { useControls } from 'leva';
 import styles from './styles.scss';
 import { sortBy } from 'lodash';
 
-const radius = 1;
+const url = new URL(window.location.href);
+
+const pointsAmount = +url.searchParams.get('pointsamount') ?? 80000;
+const radius = +url.searchParams.get('radius') ?? 1;
 const padding = radius * 0.25;
 
 const COUNTRY_DETAILS = {
@@ -29,8 +32,6 @@ const COUNTRY_DETAILS = {
     color: 'blue'
   }
 };
-
-const pointsAmount = 80000;
 
 //TODO
 // make this a class
@@ -83,6 +84,11 @@ pointsManager.states.Circle1.positions = circle1.map(p => [
   p.y - pointsManager.states.Circle1.circle.r,
   0
 ]);
+
+//bug?
+//on really high points amouts only
+//setting the state to circle2 will cause the fps to drop to ~30 and stay there (not only during the transition)
+//this is werid because nothing different is happening then with any of the other state changes
 pointsManager.states.Circle2.positions = shuffle(pointsManager.states.Circle1.positions);
 
 const circles3 = d3.packSiblings(
@@ -130,7 +136,7 @@ pointsManager.states.SortedRectangle.positions = sortBy(pointsManager.points, 'c
   const x = i % columns;
   const y = Math.floor(i / columns);
 
-  acc[p.id] = [x * 3, -y * 3, 0];
+  acc[p.id] = [x * (radius * 2 + padding), -y * (radius * 2 + padding), 0];
 
   return acc;
 }, []);
@@ -143,7 +149,11 @@ d3.group(pointsManager.points, d => d.country).forEach(points => {
     const x = i % columns;
     const y = Math.floor(i / columns);
 
-    pointsManager.states.SortedRectangles.positions[p.id] = [x * 3 + 250 * mapIndex, -y * 3, 0];
+    pointsManager.states.SortedRectangles.positions[p.id] = [
+      x * (radius * 2 + padding) + 400 * mapIndex,
+      -y * (radius * 2 + padding),
+      0
+    ];
   });
 
   mapIndex++;
@@ -205,7 +215,12 @@ const Scene = () => {
     <>
       <group position={[-windowWidth / 2, windowHeight / 2, 0]}>
         {/* <group position={[pointsManager.states.Circle1.circle.r, -pointsManager.states.Circle1.circle.r, 0]}> */}
-        <InstancedCicles ref={instanceRef} length={pointsManager.points.length} colours={colours} radius={radius} />
+        {useMemo(
+          () => (
+            <InstancedCicles ref={instanceRef} length={pointsManager.points.length} colours={colours} radius={radius} />
+          ),
+          [pointsManager.points.length]
+        )}
         {/* </group> */}
         {showFPSSpinner && <Square x={windowWidth / 2} y={windowHeight / 2} width="100" height={100} />}
       </group>
