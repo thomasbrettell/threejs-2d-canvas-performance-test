@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { Fragment, useMemo, useRef, useState } from 'react';
 import useWindowSize from '../hooks/useWindowSize';
 import Square from '../Square';
 import Circle from '../Circle';
@@ -175,19 +175,86 @@ d3.group(pointsManager.points, d => d.country).forEach(points => {
   mapIndex++;
 });
 
-pointsManager.states.PopulationPyrmaid.positions = sortBy(pointsManager.points, 'age').reduce((acc, p, i) => {
-  if (p.country === 'AUSTRALIA') {
-    acc[p.id] = [-radius, -radius, 0];
-    return acc;
+const graphWidth = 700;
+const graphHeight = 900;
+const graphMargin = {
+  top: 20,
+  right: 0,
+  bottom: 0,
+  left: 20
+};
+const graphInnerWidth = graphWidth - graphMargin.left - graphMargin.right;
+const graphInnerHeight = graphHeight - graphMargin.top - graphMargin.bottom;
+
+const countryGroups = d3.group(pointsManager.points, d => d.country);
+
+const bandScale = d3
+  .scaleBand()
+  .domain(Array.from({ length: 10 }, (_, i) => i).reverse())
+  .range([0, graphInnerHeight])
+  .padding(0.1);
+
+pointsManager.states.PopulationPyrmaid.positions = [];
+
+countryGroups.forEach((points, country) => {
+  const rows = Math.round(bandScale.bandwidth() / (radius * 2 + padding));
+
+  if (country === 'AUSTRALIA') {
+    points.forEach(p => {
+      pointsManager.states.PopulationPyrmaid.positions[p.id] = [-radius, -radius, 0];
+    });
+  }
+  if (country === 'INDIA') {
+    const ageGroup = d3.group(points, d => Math.floor(d.age / 10));
+
+    ageGroup.forEach((points, age) => {
+      points.forEach((p, i) => {
+        const row = i % rows;
+        const column = Math.floor(i / rows);
+        const x = graphInnerWidth / 2 - column * (radius * 2 + padding) + graphMargin.left - 10;
+        const y = -(bandScale(age) + graphMargin.top) - row * (radius * 2 + padding);
+        pointsManager.states.PopulationPyrmaid.positions[p.id] = [x, y, 0];
+      });
+    });
   }
 
-  const x = i % columns;
-  const y = Math.floor(i / columns);
+  if (country === 'CHINA') {
+    const ageGroup = d3.group(points, d => Math.floor(d.age / 10));
 
-  acc[p.id] = [x * (radius * 2 + padding) + radius, -y * (radius * 2 + padding) - radius, 0];
+    ageGroup.forEach((points, age) => {
+      points.forEach((p, i) => {
+        const row = i % rows;
+        const column = Math.floor(i / rows);
+        const x = column * (radius * 2 + padding) + graphMargin.left + graphInnerWidth / 2 + 10;
+        const y = -(bandScale(age) + graphMargin.top) - row * (radius * 2 + padding);
+        pointsManager.states.PopulationPyrmaid.positions[p.id] = [x, y, 0];
+      });
+    });
+  }
+});
 
-  return acc;
-}, []);
+// pointsManager.states.PopulationPyrmaid.positions = sortBy(pointsManager.points, 'age').reduce((acc, p, i) => {
+//   if (p.country !== 'INDIA') {
+//     acc[p.id] = [-radius, -radius, 0];
+//     return acc;
+//   }
+
+//   console.log(p);
+
+//   const ageGroup = Math.floor(p.age / 10);
+
+//   // const rows = countryGroups.get('INDIA').filter(p => Math.floor(p.age / 10) === ageGroup);
+//   // console.log(rows);
+
+//   console.log(ageGroup);
+
+//   const x = i % columns;
+//   const y = Math.floor(i / columns);
+
+//   acc[p.id] = [x * (radius * 2 + padding) + radius, -y * (radius * 2 + padding) - radius, 0];
+
+//   return acc;
+// }, []);
 
 console.log(pointsManager);
 
@@ -219,7 +286,7 @@ const Scene = () => {
     showFPSSpinner: false,
     todo: {
       editable: false,
-      value: `- population pyramid\n- oval`
+      value: `- ellipse`
     }
   });
   const instanceRef = useRef();
@@ -231,8 +298,6 @@ const Scene = () => {
 
     //no need to run the frame if the interpolation is done
     if (interpolateDuration.current >= 1 || interpolateDuration.current <= 0) return;
-
-    console.log('updating');
 
     for (let i = 0; i < pointsManager.points.length; i++) {
       const point = pointsManager.points[i];
@@ -267,11 +332,55 @@ const Scene = () => {
       <Stats className={styles.stats} />
 
       <Html fullscreen className={styles.html}>
-        <svg>
-          <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle">
-            {pointsState}
-          </text>
-        </svg>
+        {pointsState === 'PopulationPyrmaid' && (
+          <svg height={graphHeight} width={graphWidth}>
+            <g transform={`translate(${graphMargin.left}, ${graphMargin.top})`}>
+              <line
+                stroke="black"
+                strokeWidth={2}
+                x1={0}
+                x2={graphInnerWidth}
+                y1={graphInnerHeight}
+                y2={graphInnerHeight}
+              />
+              <line
+                stroke="black"
+                strokeWidth={2}
+                x1={graphInnerWidth / 2}
+                x2={graphInnerWidth / 2}
+                y1={0}
+                y2={graphInnerHeight}
+              />
+              {bandScale.domain().map(d => (
+                <Fragment key={d}>
+                  {/* <rect
+                    data-group={d}
+                    height={bandScale.bandwidth()}
+                    width={graphInnerWidth / 2}
+                    y={bandScale(d)}
+                    fill="red"
+                  /> */}
+                  {/* <rect
+                    data-group={d}
+                    height={bandScale.bandwidth()}
+                    width={graphInnerWidth / 2}
+                    y={bandScale(d)}
+                    x={graphInnerWidth / 2}
+                    fill="blue"
+                  /> */}
+                  <text
+                    x={graphInnerWidth / 2}
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    y={bandScale(d) + bandScale.bandwidth() / 2}
+                  >
+                    {d * 10} - {d * 10 + 10}
+                  </text>
+                </Fragment>
+              ))}
+            </g>
+          </svg>
+        )}
       </Html>
     </>
   );
