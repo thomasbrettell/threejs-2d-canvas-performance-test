@@ -176,7 +176,7 @@ d3.group(pointsManager.points, d => d.country).forEach(points => {
 });
 
 const graphWidth = 700;
-const graphHeight = 900;
+const graphHeight = Math.min(700, window.innerHeight);
 const graphMargin = {
   top: 20,
   right: 0,
