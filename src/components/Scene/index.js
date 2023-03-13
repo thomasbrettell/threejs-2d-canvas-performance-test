@@ -19,7 +19,7 @@ const url = new URL(window.location.href);
 
 const pointsAmount = +(url.searchParams.get('pointsamount') ?? 80000);
 const radius = +(url.searchParams.get('radius') ?? 1);
-const padding = radius * 0.25;
+const padding = +(url.searchParams.get('padding') ?? radius * 0.25);
 
 const COUNTRY_DETAILS = {
   CHINA: {
