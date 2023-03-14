@@ -1,4 +1,4 @@
-import React, { Fragment, useMemo, useRef, useState } from 'react';
+import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import useWindowSize from '../hooks/useWindowSize';
 import Square from '../Square';
 import Circle from '../Circle';
@@ -268,11 +268,6 @@ console.log(pointsManager);
 const o = new THREE.Object3D();
 const c = new THREE.Color();
 
-let randomColour = tinycolor.random().toRgb();
-setInterval(() => {
-  randomColour = tinycolor.random().toRgb();
-}, 2000);
-
 const Scene = () => {
   const pointsRef = useRef();
   const interpolateDuration = useRef(1);
@@ -311,6 +306,13 @@ const Scene = () => {
     }
   });
   const instanceRef = useRef();
+  const randomColourRef = useRef(tinycolor.random().toRgb());
+
+  useEffect(() => {
+    setInterval(() => {
+      randomColourRef.current = tinycolor.random().toRgb();
+    }, 2000);
+  }, []);
 
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
@@ -351,13 +353,13 @@ const Scene = () => {
       positions[i3 + 0] -= 0.1;
       positions[i3 + 1] += 0.1;
 
-      color[i3 + 0] = randomColour.r / 255;
-      color[i3 + 1] = randomColour.g / 255;
-      color[i3 + 2] = randomColour.b / 255;
+      color[i3 + 0] = randomColourRef.current.r / 255;
+      color[i3 + 1] = randomColourRef.current.g / 255;
+      color[i3 + 2] = randomColourRef.current.b / 255;
     }
 
     pointsRef.current.geometry.attributes.position.needsUpdate = true;
-    pointsRef.current.geometry.attributes.position.needsUpdate = true;
+    pointsRef.current.geometry.attributes.color.needsUpdate = true;
   });
 
   return (
