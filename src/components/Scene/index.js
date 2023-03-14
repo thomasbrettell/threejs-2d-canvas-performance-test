@@ -3,7 +3,7 @@ import useWindowSize from '../hooks/useWindowSize';
 import Square from '../Square';
 import Circle from '../Circle';
 import * as d3 from 'd3';
-import { Stats, Html } from '@react-three/drei';
+import { Stats, Html, Points, Point, Line, shaderMaterial } from '@react-three/drei';
 import InstancedCicles from '../InstancedCircles';
 import { shuffle, randomNumRange } from '../../utils';
 import gsap, { TweenLite } from 'gsap';
@@ -15,6 +15,33 @@ import { button, useControls } from 'leva';
 import styles from './styles.scss';
 import { sortBy } from 'lodash';
 import tinycolor from 'tinycolor2';
+import { ShaderLib } from 'three';
+
+const vs = `
+attribute float scale;
+
+void main() {
+
+  vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+
+  gl_PointSize = scale * ( 300.0 / - mvPosition.z );
+
+  gl_Position = projectionMatrix * mvPosition;
+
+}`;
+
+const fs = `
+uniform vec3 color;
+
+void main() {
+
+  if ( length( gl_PointCoord - vec2( 0.5, 0.5 ) ) > 0.475 ) discard;
+
+  gl_FragColor = vec4( color, 1.0 );
+
+}`;
+
+const testMaterial = shaderMaterial({}, vs, fs);
 
 const url = new URL(window.location.href);
 
@@ -126,6 +153,8 @@ pointsManager.states.Circles3.positions = pointsManager.points.map(p => {
     return [rect.x + pointsManager.states.Circles3.circle.r, rect.y - pointsManager.states.Circles3.circle.r, 0];
   }
 });
+
+const positions = Float32Array.from(pointsManager.states.Circle1.positions.flat());
 
 const colours = Float32Array.from(
   new Array(pointsManager.points.length).fill().flatMap((_, i) => pointsManager.points[i].color)
@@ -239,7 +268,13 @@ console.log(pointsManager);
 const o = new THREE.Object3D();
 const c = new THREE.Color();
 
+let randomColour = tinycolor.random().toRgb();
+setInterval(() => {
+  randomColour = tinycolor.random().toRgb();
+}, 2000);
+
 const Scene = () => {
+  const pointsRef = useRef();
   const interpolateDuration = useRef(1);
   const { pointsState, showFPSSpinner } = useControls({
     pointsState: {
@@ -280,6 +315,7 @@ const Scene = () => {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
   useFrame((state, deltaTime) => {
+    return;
     interpolateDuration.current = clamp((interpolateDuration.current += deltaTime * 0.3), 0, 1);
 
     //no need to run the frame if the interpolation is done
@@ -306,19 +342,71 @@ const Scene = () => {
     instanceRef.current.instanceMatrix.needsUpdate = true;
   });
 
+  useFrame(() => {
+    const positions = pointsRef.current.geometry.attributes.position.array;
+    const color = pointsRef.current.geometry.attributes.color.array;
+
+    for (let i = 0; i < pointsAmount; i++) {
+      const i3 = i * 3;
+      positions[i3 + 0] -= 0.1;
+      positions[i3 + 1] += 0.1;
+
+      color[i3 + 0] = randomColour.r / 255;
+      color[i3 + 1] = randomColour.g / 255;
+      color[i3 + 2] = randomColour.b / 255;
+    }
+
+    pointsRef.current.geometry.attributes.position.needsUpdate = true;
+    pointsRef.current.geometry.attributes.position.needsUpdate = true;
+  });
+
   return (
     <>
-      <group position={[-windowWidth / 2, windowHeight / 2, 0]}>
-        {/* <group position={[pointsManager.states.Circle1.circle.r, -pointsManager.states.Circle1.circle.r, 0]}> */}
+      {/* <group position={[-windowWidth / 2, windowHeight / 2, 0]}>
         {useMemo(
           () => (
             <InstancedCicles ref={instanceRef} length={pointsManager.points.length} colours={colours} radius={radius} />
           ),
           [pointsManager.points.length]
         )}
-        {/* </group> */}
         {showFPSSpinner && <Square x={windowWidth / 2} y={windowHeight / 2} width="100" height={100} />}
-      </group>
+      </group> */}
+
+      <Line
+        points={[
+          [0, -windowHeight / 2, 0],
+          [0, windowHeight / 2, 0]
+        ]}
+        color="lightgrey"
+      />
+
+      <Line
+        points={[
+          [-windowWidth / 2, 0, 0],
+          [windowWidth / 2, 0, 0]
+        ]}
+        color="lightgrey"
+      />
+
+      <points ref={pointsRef}>
+        <pointsMaterial vertexColors size={radius * 2} />
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" array={positions} count={pointsAmount} itemSize={3} />
+          <bufferAttribute attach="attributes-color" array={colours} count={pointsAmount} itemSize={3} />
+        </bufferGeometry>
+      </points>
+
+      {/* <Points limit={pointsAmount} range={pointsAmount}>
+        <shaderMaterial
+          uniforms={{ size: { value: 20 } }}
+          vertexShader={ShaderLib.points.vertexShader}
+          fragmentShader={ShaderLib.points.fragmentShader}
+        />
+
+        {pointsManager.points.map((point, i) => (
+          <Point key={point.id} position={[point.currentPos.x, point.currentPos.y, 0]} color={point.color} />
+        ))}
+      </Points> */}
 
       <Stats className={styles.stats} />
 
@@ -344,21 +432,6 @@ const Scene = () => {
               />
               {bandScale.domain().map(d => (
                 <Fragment key={d}>
-                  {/* <rect
-                    data-group={d}
-                    height={bandScale.bandwidth()}
-                    width={graphInnerWidth / 2}
-                    y={bandScale(d)}
-                    fill="red"
-                  /> */}
-                  {/* <rect
-                    data-group={d}
-                    height={bandScale.bandwidth()}
-                    width={graphInnerWidth / 2}
-                    y={bandScale(d)}
-                    x={graphInnerWidth / 2}
-                    fill="blue"
-                  /> */}
                   <text
                     x={graphInnerWidth / 2}
                     textAnchor="middle"
