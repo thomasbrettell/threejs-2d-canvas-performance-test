@@ -11,9 +11,10 @@ import Color from 'color';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { clamp, lerp, smoothstep } from 'three/src/math/MathUtils';
-import { useControls } from 'leva';
+import { button, useControls } from 'leva';
 import styles from './styles.scss';
 import { sortBy } from 'lodash';
+import tinycolor from 'tinycolor2';
 
 const url = new URL(window.location.href);
 
@@ -23,13 +24,13 @@ const padding = +(url.searchParams.get('padding') ?? radius * 0.25);
 
 const COUNTRY_DETAILS = {
   CHINA: {
-    color: [255, 0, 0]
+    color: [1, 0, 0]
   },
   AUSTRALIA: {
-    color: [0, 255, 0]
+    color: [0, 1, 0]
   },
   INDIA: {
-    color: [0, 0, 255]
+    color: [0, 0, 1]
   }
 };
 
@@ -126,7 +127,9 @@ pointsManager.states.Circles3.positions = pointsManager.points.map(p => {
   }
 });
 
-const colours = Float32Array.from(new Array(pointsManager.points.length).fill().flatMap((_, i) => [0, 0, 0]));
+const colours = Float32Array.from(
+  new Array(pointsManager.points.length).fill().flatMap((_, i) => pointsManager.points[i].color)
+);
 
 pointsManager.colours = colours;
 
@@ -259,10 +262,17 @@ const Scene = () => {
       value: radius,
       disabled: true
     },
+    colourChangeExample: button(() => {
+      const randomColour = tinycolor.random().toRgb();
+      c.setRGB(randomColour.r / 255, randomColour.g / 255, randomColour.b / 255);
+      pointsManager.points.forEach((point, i) => {
+        point.color = c.toArray();
+      });
+    }),
     showFPSSpinner: false,
     todo: {
       editable: false,
-      value: `- ellipse\n- sphere\n- alpha\n- pointsManagerClass`
+      value: `- ellipse\n- sphere\n- alpha\n- pointsManagerClass\n- webworkers for calculations`
     }
   });
   const instanceRef = useRef();
@@ -292,7 +302,6 @@ const Scene = () => {
       o.updateMatrix();
       instanceRef.current.setMatrixAt(i, o.matrix);
     }
-
     instanceRef.current.geometry.attributes.color.needsUpdate = true;
     instanceRef.current.instanceMatrix.needsUpdate = true;
   });
