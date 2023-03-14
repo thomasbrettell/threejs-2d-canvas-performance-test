@@ -23,13 +23,13 @@ const padding = +(url.searchParams.get('padding') ?? radius * 0.25);
 
 const COUNTRY_DETAILS = {
   CHINA: {
-    color: 'red'
+    color: [255, 0, 0]
   },
   AUSTRALIA: {
-    color: 'green'
+    color: [0, 255, 0]
   },
   INDIA: {
-    color: 'blue'
+    color: [0, 0, 255]
   }
 };
 
@@ -70,11 +70,13 @@ const pointsManager = {
 };
 
 pointsManager.points = Array.from({ length: pointsAmount }).map((_, i) => {
+  const country = Object.keys(COUNTRY_DETAILS)[Math.floor(Math.random() * Object.keys(COUNTRY_DETAILS).length)];
   return {
-    country: Object.keys(COUNTRY_DETAILS)[Math.floor(Math.random() * Object.keys(COUNTRY_DETAILS).length)],
+    country,
     currentPos: { x: null, y: null },
     id: i,
-    age: Math.floor(Math.random() * 100)
+    age: Math.floor(Math.random() * 100),
+    color: COUNTRY_DETAILS[country].color
   };
 });
 
@@ -124,11 +126,7 @@ pointsManager.states.Circles3.positions = pointsManager.points.map(p => {
   }
 });
 
-const colours = Float32Array.from(
-  new Array(pointsManager.points.length)
-    .fill()
-    .flatMap((_, i) => Color(COUNTRY_DETAILS[pointsManager.points[i].country].color).array())
-);
+const colours = Float32Array.from(new Array(pointsManager.points.length).fill().flatMap((_, i) => [0, 0, 0]));
 
 pointsManager.colours = colours;
 
@@ -233,32 +231,10 @@ countryGroups.forEach((points, country) => {
   }
 });
 
-// pointsManager.states.PopulationPyrmaid.positions = sortBy(pointsManager.points, 'age').reduce((acc, p, i) => {
-//   if (p.country !== 'INDIA') {
-//     acc[p.id] = [-radius, -radius, 0];
-//     return acc;
-//   }
-
-//   console.log(p);
-
-//   const ageGroup = Math.floor(p.age / 10);
-
-//   // const rows = countryGroups.get('INDIA').filter(p => Math.floor(p.age / 10) === ageGroup);
-//   // console.log(rows);
-
-//   console.log(ageGroup);
-
-//   const x = i % columns;
-//   const y = Math.floor(i / columns);
-
-//   acc[p.id] = [x * (radius * 2 + padding) + radius, -y * (radius * 2 + padding) - radius, 0];
-
-//   return acc;
-// }, []);
-
 console.log(pointsManager);
 
 const o = new THREE.Object3D();
+const c = new THREE.Color();
 
 const Scene = () => {
   const interpolateDuration = useRef(1);
@@ -286,7 +262,7 @@ const Scene = () => {
     showFPSSpinner: false,
     todo: {
       editable: false,
-      value: `- ellipse`
+      value: `- ellipse\n- sphere\n- alpha\n- pointsManagerClass`
     }
   });
   const instanceRef = useRef();
@@ -309,9 +285,15 @@ const Scene = () => {
       point.currentPos.y = lerp(point.currentPos.y, toPos[1], st);
 
       o.position.set(point.currentPos.x, point.currentPos.y, 0);
+
+      //colours set here
+      c.setRGB(point.color[0], point.color[1], point.color[2]).toArray(pointsManager.colours, i * 3);
+
       o.updateMatrix();
       instanceRef.current.setMatrixAt(i, o.matrix);
     }
+
+    instanceRef.current.geometry.attributes.color.needsUpdate = true;
     instanceRef.current.instanceMatrix.needsUpdate = true;
   });
 
