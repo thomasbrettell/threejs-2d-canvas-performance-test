@@ -88,6 +88,12 @@ const Scene = () => {
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
   useFrame((state, deltaTime) => {
+    if (pointsState === 'Sphere') {
+      pointsRef.current.rotation.y += 0.001;
+    } else {
+      pointsRef.current.rotation.y = 0;
+    }
+
     positionInterpolation.current = clamp((positionInterpolation.current += deltaTime * 0.3), 0, 1);
     colourInterpolation.current = clamp((colourInterpolation.current += deltaTime * 0.3), 0, 1);
 
@@ -105,6 +111,7 @@ const Scene = () => {
 
       point.position.x = lerp(point.position.x, pointsManager.states[pointsState].positions[i3 + 0], positionst);
       point.position.y = lerp(point.position.y, pointsManager.states[pointsState].positions[i3 + 1], positionst);
+      point.position.z = lerp(point.position.z, pointsManager.states[pointsState].positions[i3 + 2], positionst);
 
       point.colour.r = lerp(point.colour.r, COUNTRY_DETAILS[point.country].color.r, colourst);
       point.colour.g = lerp(point.colour.g, COUNTRY_DETAILS[point.country].color.g, colourst);
@@ -142,7 +149,16 @@ const Scene = () => {
       />
 
       <points ref={pointsRef}>
-        <PointMaterial vertexColors size={radius * 2} toneMapped={false} transparent />
+        <PointMaterial
+          vertexColors
+          size={radius * 2}
+          toneMapped={false}
+          transparent
+          depthTest
+          alphaTest={0.3}
+          depthWrite
+          sizeAttenuation
+        />
         <bufferGeometry>
           <bufferAttribute
             attach="attributes-position"
@@ -156,12 +172,12 @@ const Scene = () => {
             count={pointsAmount}
             itemSize={3}
           />
-          <bufferAttribute
+          {/* <bufferAttribute
             attach="attributes-opacity"
             array={pointsManager.initialOpacities}
             count={pointsAmount}
             itemSize={1}
-          />
+          /> */}
         </bufferGeometry>
       </points>
 

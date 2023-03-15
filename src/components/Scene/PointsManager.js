@@ -29,6 +29,9 @@ export default class PointsManager {
       },
       Random: {
         positions: this.calculateRandom()
+      },
+      Sphere: {
+        positions: this.calculateSphere(350)
       }
     };
 
@@ -50,6 +53,8 @@ export default class PointsManager {
         return { r: this.radius + this.padding };
       })
     );
+
+    console.log(d3.packEnclose(circle));
 
     return Float32Array.from(circle.flatMap(({ x, y }) => [x, -y, 0]));
   }
@@ -74,5 +79,25 @@ export default class PointsManager {
           0
         ])
     );
+  }
+
+  calculateSphere(radius) {
+    const numPoints = this.points.length;
+    const points = new Float32Array(numPoints * 3);
+
+    for (let i = 0; i < numPoints; i++) {
+      const phi = Math.acos(-1 + (2 * i) / numPoints);
+      const theta = Math.sqrt(numPoints * Math.PI) * phi;
+
+      const x = radius * Math.cos(theta) * Math.sin(phi);
+      const y = radius * Math.sin(theta) * Math.sin(phi);
+      const z = radius * Math.cos(phi);
+
+      points[i * 3] = x;
+      points[i * 3 + 1] = y;
+      points[i * 3 + 2] = z;
+    }
+
+    return points;
   }
 }
