@@ -30,7 +30,7 @@ export default class PointsManager {
       Random: {
         positions: this.calculateRandom()
       },
-      Sphere: {
+      Globe: {
         positions: this.calculateSphere(350)
       }
     };
@@ -53,8 +53,6 @@ export default class PointsManager {
         return { r: this.radius + this.padding };
       })
     );
-
-    console.log(d3.packEnclose(circle));
 
     return Float32Array.from(circle.flatMap(({ x, y }) => [x, -y, 0]));
   }

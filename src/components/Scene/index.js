@@ -35,8 +35,10 @@ console.log(pointsManager);
 
 const Scene = () => {
   const pointsRef = useRef();
+
   const positionInterpolation = useRef(1);
   const colourInterpolation = useRef(0);
+  const rotationInterpolation = useRef(1);
 
   const { pointsState } = useControls({
     pointsState: {
@@ -82,23 +84,25 @@ const Scene = () => {
     },
     todo: {
       editable: false,
-      value: `- ellipse\n- sphere\n- alpha\n- webworkers for calculations`
+      value: `- ellipse\n- alpha\n- webworkers for calculations`
     }
   });
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
   useFrame((state, deltaTime) => {
-    if (pointsState === 'Sphere') {
-      pointsRef.current.rotation.y += 0.001;
-    } else {
-      pointsRef.current.rotation.y = 0;
-    }
-
     positionInterpolation.current = clamp((positionInterpolation.current += deltaTime * 0.3), 0, 1);
     colourInterpolation.current = clamp((colourInterpolation.current += deltaTime * 0.3), 0, 1);
 
     const positionst = smoothstep(positionInterpolation.current, 0, 1);
     const colourst = smoothstep(colourInterpolation.current, 0, 1);
+
+    if (pointsState === 'Globe') {
+      pointsRef.current.rotation.y += 0.001;
+      rotationInterpolation.current = 0;
+    } else {
+      rotationInterpolation.current = clamp((rotationInterpolation.current += deltaTime * 0.3), 0, 1);
+      pointsRef.current.rotation.y = lerp(pointsRef.current.rotation.y, 0, rotationInterpolation.current);
+    }
 
     if (positionst >= 1 && colourst >= 1) return;
 
