@@ -1,13 +1,14 @@
 import React, { Fragment, useRef } from 'react';
 import useWindowSize from '../../hooks/useWindowSize';
 import { Stats, Html, Line, PointMaterial } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { clamp, lerp, smoothstep } from 'three/src/math/MathUtils';
 import { useControls } from 'leva';
 import styles from './styles.scss';
 import PointsManager from './PointsManager';
 import { COUNTRY_DETAILS } from '../../constants';
 import Circle from '../Circle';
+import { latLongToSphereXyz } from '../../utils';
 
 // WIP/TODO
 // Custom shader
@@ -94,7 +95,7 @@ const Scene = () => {
     const positionst = smoothstep(positionInterpolation.current, 0, 1);
     const colourst = smoothstep(colourInterpolation.current, 0, 1);
 
-    if (pointsState === 'Globe') {
+    if (pointsState === 'Sphere' || pointsState === 'Globe') {
       pointsRef.current.rotation.y += deltaTime * 0.3;
       pointsRef.current.rotation.y = pointsRef.current.rotation.y % (Math.PI * 2);
 
@@ -102,6 +103,8 @@ const Scene = () => {
     } else {
       rotationInterpolation.current = clamp((rotationInterpolation.current += deltaTime * 0.3), 0, 1);
       pointsRef.current.rotation.y = lerp(pointsRef.current.rotation.y, 0, rotationInterpolation.current);
+
+      rotationInterpolation.current = clamp((rotationInterpolation.current += deltaTime * 0.3), 0, 1);
     }
 
     if (positionst >= 1 && colourst >= 1) return;
@@ -143,7 +146,6 @@ const Scene = () => {
         ]}
         color="lightgrey"
       />
-
       <Line
         points={[
           [-windowWidth / 2, 0, 0],
@@ -175,16 +177,14 @@ const Scene = () => {
             count={pointsAmount}
             itemSize={3}
           />
-          {/* <bufferAttribute
-            attach="attributes-opacity"
-            array={pointsManager.initialOpacities}
-            count={pointsAmount}
-            itemSize={1}
-          /> */}
         </bufferGeometry>
       </points>
 
-      <Circle r={350} x={0} y={0} color={0xffffff} opacity={pointsState === 'Globe' ? 1 : 0} />
+      <Circle
+        r={pointsManager.states.Sphere.radius}
+        color={0xffffff}
+        opacity={pointsState === 'Sphere' || pointsState === 'Globe' ? 1 : 0}
+      />
 
       <Stats className={styles.stats} />
 

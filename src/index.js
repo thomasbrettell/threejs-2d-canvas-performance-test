@@ -1,12 +1,10 @@
-import acto from '@abcnews/alternating-case-to-object';
 import { whenOdysseyLoaded } from '@abcnews/env-utils';
-import { getMountValue, selectMounts } from '@abcnews/mount-utils';
+import { selectMounts } from '@abcnews/mount-utils';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './components/App';
 
 let root;
-let appProps;
 
 function renderApp() {
   root.render(<App />);
@@ -17,7 +15,6 @@ whenOdysseyLoaded.then(() => {
 
   if (appMountEl) {
     root = createRoot(appMountEl);
-    appProps = acto(getMountValue(appMountEl));
     renderApp();
   }
 });

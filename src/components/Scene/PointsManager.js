@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import * as d3 from 'd3';
 import { shuffle } from 'lodash';
-import { randomNumRange } from '../../utils';
+import { latLongToSphereXyz, randomNumRange } from '../../utils';
 import { COUNTRY_DETAILS } from '../../constants';
 
 export default class PointsManager {
@@ -30,10 +30,15 @@ export default class PointsManager {
       Random: {
         positions: this.calculateRandom()
       },
+      Sphere: {
+        radius: 350
+      },
       Globe: {
-        positions: this.calculateSphere(350)
+        radius: 350
       }
     };
+    this.calculateGlobe();
+    this.states.Sphere.positions = this.calculateSphere(this.states.Sphere.radius);
 
     this.initialPositions = Float32Array.from(this.states.Circle1.positions);
     this.initialColours = Float32Array.from(
@@ -97,5 +102,31 @@ export default class PointsManager {
     }
 
     return points;
+  }
+
+  async calculateGlobe() {
+    this.states.Globe.positions = Float32Array.from(
+      Array(this.points.length)
+        .fill()
+        .flatMap(() => [0, 0, 0])
+    );
+    d3.json('/globeDots.json').then(data => {
+      this.states.Globe.positions = Float32Array.from(
+        Array(this.points.length)
+          .fill()
+          .flatMap((_, i) => {
+            const coord = data[i];
+
+            if (coord) {
+              return latLongToSphereXyz({
+                latitude: coord[0],
+                longitude: coord[1],
+                radius: this.states.Globe.radius
+              });
+            }
+            return [0, 0, 0];
+          })
+      );
+    });
   }
 }

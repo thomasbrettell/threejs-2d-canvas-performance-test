@@ -1,8 +1,8 @@
 import { useFrame } from '@react-three/fiber';
-import React, { useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 import { clamp, lerp } from 'three/src/math/MathUtils';
 
-const Circle = ({ x, y, r, color = 0x000000, opacity }) => {
+const Circle = ({ x = 0, y = 0, z = 0, r, color = 0x000000, opacity }) => {
   const ref = useRef();
   const opacityInterpolation = useRef(1);
   const initialUpdate = useRef(true);
@@ -21,7 +21,7 @@ const Circle = ({ x, y, r, color = 0x000000, opacity }) => {
   });
 
   return (
-    <mesh ref={ref} position={[x, -y, 0]}>
+    <mesh ref={ref} position={[x, -y, z]}>
       <circleGeometry args={[r, 32]} />
       <meshBasicMaterial color={color} toneMapped={false} transparent />
     </mesh>
