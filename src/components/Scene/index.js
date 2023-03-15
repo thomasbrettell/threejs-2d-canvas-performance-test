@@ -1,24 +1,24 @@
 import React, { Fragment, useRef } from 'react';
-import useWindowSize from '../hooks/useWindowSize';
-import { Stats, Html, Line, shaderMaterial, PointMaterial } from '@react-three/drei';
-import { extend, useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import useWindowSize from '../../hooks/useWindowSize';
+import { Stats, Html, Line, PointMaterial } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
 import { clamp, lerp, smoothstep } from 'three/src/math/MathUtils';
 import { useControls } from 'leva';
 import styles from './styles.scss';
-import { ShaderLib } from 'three';
 import PointsManager from './PointsManager';
 import { COUNTRY_DETAILS } from '../../constants';
 
-const CustomPointShader = shaderMaterial(
-  Object.keys(ShaderLib.points.uniforms).reduce((acc, key) => {
-    acc[key] = ShaderLib.points.uniforms[key].value;
-    return acc;
-  }, {}),
-  ShaderLib.points.vertexShader,
-  ShaderLib.points.fragmentShader
-);
-extend({ CustomPointShader });
+// WIP/TODO
+// Custom shader
+// const CustomPointShader = shaderMaterial(
+//   Object.keys(ShaderLib.points.uniforms).reduce((acc, key) => {
+//     acc[key] = ShaderLib.points.uniforms[key].value;
+//     return acc;
+//   }, {}),
+//   ShaderLib.points.vertexShader,
+//   ShaderLib.points.fragmentShader
+// );
+// extend({ CustomPointShader });
 
 const url = new URL(window.location.href);
 
@@ -27,9 +27,6 @@ const radius = +(url.searchParams.get('radius') ?? 1);
 const padding = +(url.searchParams.get('padding') ?? radius * 0.25);
 
 const pointsManager = new PointsManager(pointsAmount, radius, padding);
-
-const o = new THREE.Object3D();
-const c = new THREE.Color();
 
 console.log(pointsManager);
 
