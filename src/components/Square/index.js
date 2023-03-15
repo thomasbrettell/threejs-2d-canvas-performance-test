@@ -5,7 +5,7 @@ const Square = ({ x, y, width, height, color = 0x000000 }) => {
   const ref = useRef();
 
   useFrame(() => {
-    ref.current.rotation.z += 0.01;
+    // ref.current.rotation.z += 0.01;
   });
 
   return (

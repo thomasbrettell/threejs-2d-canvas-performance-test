@@ -7,6 +7,7 @@ import { useControls } from 'leva';
 import styles from './styles.scss';
 import PointsManager from './PointsManager';
 import { COUNTRY_DETAILS } from '../../constants';
+import Square from '../Square';
 
 // WIP/TODO
 // Custom shader
@@ -94,7 +95,9 @@ const Scene = () => {
     const colourst = smoothstep(colourInterpolation.current, 0, 1);
 
     if (pointsState === 'Globe') {
-      pointsRef.current.rotation.y += 0.001;
+      pointsRef.current.rotation.y += deltaTime * 0.3;
+      pointsRef.current.rotation.y = pointsRef.current.rotation.y % (Math.PI * 2);
+
       rotationInterpolation.current = 0;
     } else {
       rotationInterpolation.current = clamp((rotationInterpolation.current += deltaTime * 0.3), 0, 1);
