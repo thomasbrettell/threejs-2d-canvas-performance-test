@@ -79,8 +79,6 @@ const Scene = () => {
     const positionst = smoothstep(positionInterpolation.current, 0, 1);
     const colourst = smoothstep(colourInterpolation.current, 0, 1);
 
-    console.log(colourst);
-
     if (positionst >= 1 && colourst >= 1) return;
 
     const positions = pointsRef.current.geometry.attributes.position.array;
