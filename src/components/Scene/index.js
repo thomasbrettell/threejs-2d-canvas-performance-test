@@ -7,7 +7,7 @@ import { useControls } from 'leva';
 import styles from './styles.scss';
 import PointsManager from './PointsManager';
 import { COUNTRY_DETAILS } from '../../constants';
-import Square from '../Square';
+import Circle from '../Circle';
 
 // WIP/TODO
 // Custom shader
@@ -161,7 +161,6 @@ const Scene = () => {
           depthTest
           alphaTest={0.3}
           depthWrite
-          sizeAttenuation
         />
         <bufferGeometry>
           <bufferAttribute
@@ -184,6 +183,8 @@ const Scene = () => {
           /> */}
         </bufferGeometry>
       </points>
+
+      <Circle r={350} x={0} y={0} color={0xffffff} opacity={pointsState === 'Globe' ? 1 : 0} />
 
       <Stats className={styles.stats} />
 
