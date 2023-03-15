@@ -1,22 +1,24 @@
-import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Fragment, useRef } from 'react';
 import useWindowSize from '../hooks/useWindowSize';
-import Square from '../Square';
-import Circle from '../Circle';
-import * as d3 from 'd3';
-import { Stats, Html, Points, Point, Line, shaderMaterial } from '@react-three/drei';
-import InstancedCicles from '../InstancedCircles';
-import { shuffle, randomNumRange } from '../../utils';
-import gsap, { TweenLite } from 'gsap';
-import Color from 'color';
-import { useFrame } from '@react-three/fiber';
+import { Stats, Html, Line, shaderMaterial, PointMaterial } from '@react-three/drei';
+import { extend, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { clamp, lerp, smoothstep } from 'three/src/math/MathUtils';
-import { button, useControls } from 'leva';
+import { useControls } from 'leva';
 import styles from './styles.scss';
-import { sortBy } from 'lodash';
-import tinycolor from 'tinycolor2';
 import { ShaderLib } from 'three';
 import PointsManager from './PointsManager';
+import { COUNTRY_DETAILS } from '../../constants';
+
+const CustomPointShader = shaderMaterial(
+  Object.keys(ShaderLib.points.uniforms).reduce((acc, key) => {
+    acc[key] = ShaderLib.points.uniforms[key].value;
+    return acc;
+  }, {}),
+  ShaderLib.points.vertexShader,
+  ShaderLib.points.fragmentShader
+);
+extend({ CustomPointShader });
 
 const url = new URL(window.location.href);
 
@@ -57,20 +59,33 @@ const Scene = () => {
       value: radius,
       disabled: true
     },
+    chinaColour: {
+      value: `#${COUNTRY_DETAILS.CHINA.color.getHexString()}`,
+      onChange: value => {
+        COUNTRY_DETAILS.CHINA.color.set(value);
+        colourInterpolation.current = 0;
+      }
+    },
+    australiaColour: {
+      value: `#${COUNTRY_DETAILS.AUSTRALIA.color.getHexString()}`,
+      onChange: value => {
+        COUNTRY_DETAILS.AUSTRALIA.color.set(value);
+        colourInterpolation.current = 0;
+      }
+    },
+    indiaColour: {
+      value: `#${COUNTRY_DETAILS.INDIA.color.getHexString()}`,
+      onChange: value => {
+        COUNTRY_DETAILS.INDIA.color.set(value);
+        colourInterpolation.current = 0;
+      }
+    },
     todo: {
       editable: false,
-      value: `- ellipse\n- sphere\n- alpha\n- pointsManagerClass\n- webworkers for calculations`
+      value: `- ellipse\n- sphere\n- alpha\n- webworkers for calculations`
     }
   });
   const { width: windowWidth, height: windowHeight } = useWindowSize();
-  const randomColour = useRef(tinycolor.random().toRgb());
-
-  useEffect(() => {
-    setInterval(() => {
-      randomColour.current = tinycolor.random().toRgb();
-      colourInterpolation.current = 0;
-    }, 6000);
-  });
 
   useFrame((state, deltaTime) => {
     positionInterpolation.current = clamp((positionInterpolation.current += deltaTime * 0.3), 0, 1);
@@ -91,9 +106,9 @@ const Scene = () => {
       point.position.x = lerp(point.position.x, pointsManager.states[pointsState].positions[i3 + 0], positionst);
       point.position.y = lerp(point.position.y, pointsManager.states[pointsState].positions[i3 + 1], positionst);
 
-      point.colour.r = lerp(point.colour.r, randomColour.current.r / 255, colourst);
-      point.colour.g = lerp(point.colour.g, randomColour.current.g / 255, colourst);
-      point.colour.b = lerp(point.colour.b, randomColour.current.b / 255, colourst);
+      point.colour.r = lerp(point.colour.r, COUNTRY_DETAILS[point.country].color.r, colourst);
+      point.colour.g = lerp(point.colour.g, COUNTRY_DETAILS[point.country].color.g, colourst);
+      point.colour.b = lerp(point.colour.b, COUNTRY_DETAILS[point.country].color.b, colourst);
 
       positions[i3 + 0] = point.position.x;
       positions[i3 + 1] = point.position.y;
@@ -127,7 +142,7 @@ const Scene = () => {
       />
 
       <points ref={pointsRef}>
-        <pointsMaterial vertexColors size={radius * 2} toneMapped={false} />
+        <PointMaterial vertexColors size={radius * 2} toneMapped={false} transparent />
         <bufferGeometry>
           <bufferAttribute
             attach="attributes-position"
@@ -140,6 +155,12 @@ const Scene = () => {
             array={pointsManager.initialColours}
             count={pointsAmount}
             itemSize={3}
+          />
+          <bufferAttribute
+            attach="attributes-opacity"
+            array={pointsManager.initialOpacities}
+            count={pointsAmount}
+            itemSize={1}
           />
         </bufferGeometry>
       </points>
