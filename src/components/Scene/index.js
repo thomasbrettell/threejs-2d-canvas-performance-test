@@ -39,6 +39,18 @@ const Scene = () => {
       },
       transient: false
     },
+    pointsAmount: {
+      value: pointsAmount,
+      disabled: true
+    },
+    padding: {
+      value: padding,
+      disabled: true
+    },
+    radius: {
+      value: radius,
+      disabled: true
+    },
     australiaOpacity: {
       value: 1,
       min: 0,
@@ -68,18 +80,6 @@ const Scene = () => {
         opacityInterpolation.current = 0;
       },
       transient: false
-    },
-    pointsAmount: {
-      value: pointsAmount,
-      disabled: true
-    },
-    padding: {
-      value: padding,
-      disabled: true
-    },
-    radius: {
-      value: radius,
-      disabled: true
     },
     chinaColour: {
       value: `#${COUNTRY_DETAILS.CHINA.color.getHexString()}`,
@@ -197,6 +197,7 @@ const Scene = () => {
           depthWrite
           object={customPointsMaterial}
           attach="material"
+          alphaTest={0}
         />
         <bufferGeometry>
           <bufferAttribute
