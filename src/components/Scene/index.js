@@ -1,26 +1,16 @@
 import React, { Fragment, useRef } from 'react';
 import useWindowSize from '../../hooks/useWindowSize';
-import { Stats, Html, Line, PointMaterial } from '@react-three/drei';
-import { useFrame, useThree } from '@react-three/fiber';
+import { Stats, Html, Line } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
 import { clamp, lerp, smoothstep } from 'three/src/math/MathUtils';
 import { useControls } from 'leva';
 import styles from './styles.scss';
 import PointsManager from './PointsManager';
 import { COUNTRY_DETAILS } from '../../constants';
 import Circle from '../Circle';
-import { latLongToSphereXyz } from '../../utils';
+import CustomPointsMaterial from './customPointsMaterial';
 
-// WIP/TODO
-// Custom shader
-// const CustomPointShader = shaderMaterial(
-//   Object.keys(ShaderLib.points.uniforms).reduce((acc, key) => {
-//     acc[key] = ShaderLib.points.uniforms[key].value;
-//     return acc;
-//   }, {}),
-//   ShaderLib.points.vertexShader,
-//   ShaderLib.points.fragmentShader
-// );
-// extend({ CustomPointShader });
+const customPointsMaterial = new CustomPointsMaterial(null);
 
 const url = new URL(window.location.href);
 
@@ -38,13 +28,44 @@ const Scene = () => {
   const positionInterpolation = useRef(1);
   const colourInterpolation = useRef(0);
   const rotationInterpolation = useRef(1);
+  const opacityInterpolation = useRef(1);
 
-  const { pointsState } = useControls({
+  const { pointsState, australiaOpacity, chinaOpacity, indiaOpacity } = useControls({
     pointsState: {
       value: 'Circle1',
       options: Object.keys(pointsManager.states),
       onChange: () => {
         positionInterpolation.current = 0;
+      },
+      transient: false
+    },
+    australiaOpacity: {
+      value: 1,
+      min: 0,
+      max: 1,
+      step: 0.01,
+      onChange: () => {
+        opacityInterpolation.current = 0;
+      },
+      transient: false
+    },
+    chinaOpacity: {
+      value: 1,
+      min: 0,
+      max: 1,
+      step: 0.01,
+      onChange: () => {
+        opacityInterpolation.current = 0;
+      },
+      transient: false
+    },
+    indiaOpacity: {
+      value: 1,
+      min: 0,
+      max: 1,
+      step: 0.01,
+      onChange: () => {
+        opacityInterpolation.current = 0;
       },
       transient: false
     },
@@ -91,9 +112,11 @@ const Scene = () => {
   useFrame((state, deltaTime) => {
     positionInterpolation.current = clamp((positionInterpolation.current += deltaTime * 0.3), 0, 1);
     colourInterpolation.current = clamp((colourInterpolation.current += deltaTime * 0.3), 0, 1);
+    opacityInterpolation.current = clamp((opacityInterpolation.current += deltaTime * 0.3), 0, 1);
 
     const positionst = smoothstep(positionInterpolation.current, 0, 1);
     const colourst = smoothstep(colourInterpolation.current, 0, 1);
+    const opacityst = smoothstep(opacityInterpolation.current, 0, 1);
 
     if (pointsState === 'Sphere' || pointsState === 'Globe') {
       pointsRef.current.rotation.y += deltaTime * 0.3;
@@ -107,10 +130,11 @@ const Scene = () => {
       rotationInterpolation.current = clamp((rotationInterpolation.current += deltaTime * 0.3), 0, 1);
     }
 
-    if (positionst >= 1 && colourst >= 1) return;
+    if (positionst >= 1 && colourst >= 1 && opacityst >= 1) return;
 
     const positions = pointsRef.current.geometry.attributes.position.array;
     const color = pointsRef.current.geometry.attributes.color.array;
+    const opacities = pointsRef.current.geometry.attributes.pointOpacity.array;
 
     for (let i = 0; i < pointsAmount; i++) {
       const point = pointsManager.points[i];
@@ -124,6 +148,12 @@ const Scene = () => {
       point.colour.g = lerp(point.colour.g, COUNTRY_DETAILS[point.country].color.g, colourst);
       point.colour.b = lerp(point.colour.b, COUNTRY_DETAILS[point.country].color.b, colourst);
 
+      point.opacity = lerp(
+        point.opacity,
+        point.country === 'AUSTRALIA' ? australiaOpacity : point.country === 'CHINA' ? chinaOpacity : indiaOpacity,
+        opacityst
+      );
+
       positions[i3 + 0] = point.position.x;
       positions[i3 + 1] = point.position.y;
       positions[i3 + 2] = point.position.z;
@@ -131,10 +161,13 @@ const Scene = () => {
       color[i3 + 0] = point.colour.r;
       color[i3 + 1] = point.colour.g;
       color[i3 + 2] = point.colour.b;
+
+      opacities[i] = point.opacity;
     }
 
     pointsRef.current.geometry.attributes.position.needsUpdate = true;
     pointsRef.current.geometry.attributes.color.needsUpdate = true;
+    pointsRef.current.geometry.attributes.pointOpacity.needsUpdate = true;
   });
 
   return (
@@ -155,14 +188,15 @@ const Scene = () => {
       />
 
       <points ref={pointsRef}>
-        <PointMaterial
+        <primitive
           vertexColors
           size={radius * 2}
           toneMapped={false}
           transparent
           depthTest
-          alphaTest={0.3}
           depthWrite
+          object={customPointsMaterial}
+          attach="material"
         />
         <bufferGeometry>
           <bufferAttribute
@@ -176,6 +210,12 @@ const Scene = () => {
             array={pointsManager.initialColours}
             count={pointsAmount}
             itemSize={3}
+          />
+          <bufferAttribute
+            attach="attributes-pointOpacity"
+            array={pointsManager.initialOpacities}
+            count={pointsAmount}
+            itemSize={1}
           />
         </bufferGeometry>
       </points>

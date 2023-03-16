@@ -36,6 +36,30 @@ export default class PointsManager {
       Globe: {
         radius: 350
       }
+      // PopulationPyramid: {
+      //   graphWidth: 700,
+      //   graphHeight: Math.min(700, window.innerHeight),
+      //   graphMargin: {
+      //     top: 20,
+      //     right: 0,
+      //     bottom: 0,
+      //     left: 20
+      //   },
+      //   graphInnerWidth:
+      //     this.states.PopulationPyramid.graphWidth -
+      //     this.states.PopulationPyramid.graphMargin.left -
+      //     this.states.PopulationPyramid.graphMargin.right,
+      //   graphInnerHeight:
+      //     this.states.PopulationPyramid.graphHeight -
+      //     this.states.PopulationPyramid.graphMargin.top -
+      //     this.states.PopulationPyramid.graphMargin.bottom,
+      //   countryGroups: d3.group(this.points, d => d.country),
+      //   bandScale: d3
+      //     .scaleBand()
+      //     .domain(Array.from({ length: 10 }, (_, i) => i).reverse())
+      //     .range([0, this.states.PopulationPyramid.graphInnerHeight])
+      //     .padding(0.1)
+      // }
     };
     this.calculateGlobe();
     this.states.Sphere.positions = this.calculateSphere(this.states.Sphere.radius);
@@ -44,7 +68,9 @@ export default class PointsManager {
     this.initialColours = Float32Array.from(
       new Array(_pointsAmount).fill().flatMap((_, i) => this.points[i].colour.toArray())
     );
-    this.initialOpacities = Float32Array.from(new Array(_pointsAmount).fill().flatMap(() => [Math.random()]));
+    this.initialOpacities = Float32Array.from(
+      new Array(_pointsAmount).fill().flatMap((_, i) => [this.points[i].opacity])
+    );
 
     this.points.forEach((point, i) => {
       const i3 = i * 3;
