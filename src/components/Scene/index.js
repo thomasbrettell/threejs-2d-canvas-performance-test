@@ -8,7 +8,7 @@ import styles from './styles.scss';
 import PointsManager from './PointsManager';
 import { COUNTRY_DETAILS } from '../../constants';
 import Circle from '../Circle';
-import CustomPointsMaterial from './customPointsMaterial';
+import CustomPointsMaterial from './CustomPointsMaterial';
 
 const customPointsMaterial = new CustomPointsMaterial(null);
 
